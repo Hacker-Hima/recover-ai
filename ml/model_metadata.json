@@ -1,0 +1,60 @@
+{
+  "model_type": "CalibratedRandomForest",
+  "model_version": "1.0",
+  "feature_columns": [
+    "amount",
+    "attempt_number",
+    "previous_success_rate",
+    "previous_failures",
+    "customer_tenure_days",
+    "subscription",
+    "method_credit_card",
+    "method_debit_card",
+    "method_upi",
+    "method_net_banking",
+    "method_wallet",
+    "cat_TRANSIENT",
+    "cat_SOFT_DECLINE",
+    "cat_HARD_DECLINE",
+    "cat_CUSTOMER_ACTION_REQUIRED",
+    "cat_UNKNOWN"
+  ],
+  "payment_methods": [
+    "credit_card",
+    "debit_card",
+    "upi",
+    "net_banking",
+    "wallet"
+  ],
+  "failure_categories": [
+    "TRANSIENT",
+    "SOFT_DECLINE",
+    "HARD_DECLINE",
+    "CUSTOMER_ACTION_REQUIRED",
+    "UNKNOWN"
+  ],
+  "metrics": {
+    "precision": 0.6882,
+    "recall": 0.2155,
+    "f1": 0.3282,
+    "roc_auc": 0.7395,
+    "confusion_matrix": [
+      [
+        674,
+        29
+      ],
+      [
+        233,
+        64
+      ]
+    ],
+    "test_size": 1000,
+    "train_size": 4000
+  },
+  "training_params": {
+    "n_estimators": 200,
+    "max_depth": 8,
+    "test_size": 0.2,
+    "random_state": 42
+  }
+}
