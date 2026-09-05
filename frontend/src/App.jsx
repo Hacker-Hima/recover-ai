@@ -15,12 +15,12 @@ function Toast({ message, type, onClose }) {
     return () => clearTimeout(t);
   }, [onClose]);
 
-  const color = type === 'error' ? 'bg-red-500/15 border-red-500/20 text-red-400'
-    : type === 'success' ? 'bg-emerald-500/15 border-emerald-500/20 text-emerald-400'
-    : 'bg-brand-500/15 border-brand-500/20 text-brand-500';
+  const color = type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800 shadow-rose-100'
+    : type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-emerald-100'
+    : 'bg-brand-50 border-brand-200 text-brand-800 shadow-brand-100';
 
   return (
-    <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg border text-sm font-medium shadow-xl animate-slide-in ${color}`}>
+    <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-xl border text-sm font-medium shadow-lg animate-slide-in ${color}`}>
       {message}
     </div>
   );
@@ -30,14 +30,14 @@ function AgentRunBanner({ runState }) {
   if (!runState?.isRunning) return null;
   const pct = runState.total > 0 ? Math.round(runState.processed / runState.total * 100) : 0;
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 bg-brand-500/90 backdrop-blur-md px-4 py-2.5 flex items-center gap-4 text-sm text-white">
-      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-      <span className="font-semibold">RecoverAI Agent Running</span>
-      <span className="text-white/70">{runState.processed}/{runState.total} payments processed</span>
-      <div className="flex-1 max-w-xs h-1.5 bg-white/20 rounded-full overflow-hidden">
+    <div className="fixed top-0 left-0 right-0 z-40 bg-brand-600/95 backdrop-blur-md px-6 py-2.5 flex items-center gap-4 text-sm text-white shadow-md">
+      <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+      <span className="font-semibold tracking-wide">RecoverAI Agent Running</span>
+      <span className="text-white/80">{runState.processed} / {runState.total} payments processed</span>
+      <div className="flex-1 max-w-xs h-2 bg-black/20 rounded-full overflow-hidden p-0.5">
         <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-white/70">{pct}%</span>
+      <span className="font-mono font-medium text-white/90">{pct}%</span>
     </div>
   );
 }
@@ -59,6 +59,7 @@ export default function App() {
   const [activityFeed, setActivityFeed] = useState([]);
   const [dataStatus, setDataStatus] = useState(null);
   const [loading, setLoading] = useState({});
+  const [confirmReset, setConfirmReset] = useState(false);
   const sseRef = useRef(null);
 
   const showToast = (message, type = 'info') => setToast({ message, type, id: Date.now() });
@@ -197,16 +198,26 @@ export default function App() {
   }
 
   async function handleReset() {
-    if (!confirm('Reset all data and reload 20 demo cases?')) return;
+    if (!confirmReset) {
+      setConfirmReset(true);
+      setTimeout(() => setConfirmReset(false), 4000);
+      return;
+    }
+    setConfirmReset(false);
     setLoad('reset', true);
     try {
       await api.resetDemo();
-      showToast('Demo reset complete', 'success');
+      showToast('Demo reset complete — 20 cases reloaded', 'success');
+      setRunState(null);
+      setBaselineState(null);
       setCompareData(null);
       setActivityFeed([]);
       refreshAll();
-    } catch (e) { showToast(e.message, 'error'); }
-    finally { setLoad('reset', false); }
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      setLoad('reset', false);
+    }
   }
 
   const isAgentRunning = runState?.isRunning;
@@ -216,27 +227,33 @@ export default function App() {
       <AgentRunBanner runState={runState} />
 
       {/* Header */}
-      <header className="border-b border-white/5 bg-surface-1/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
+      <header className="border-b border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-30 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-sm">R</div>
-            <div>
-              <span className="font-bold text-slate-100">RecoverAI</span>
-              <span className="text-slate-500 text-xs ml-2">Payment Recovery Agent</span>
+            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+              R
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-bold text-slate-900 tracking-tight text-lg">RecoverAI</span>
+              <span className="text-slate-500 text-xs font-medium">AI Revenue Recovery Agent</span>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex gap-1">
+          <nav className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
             {TABS.map(t => (
               <button
                 key={t}
                 onClick={() => { setTab(t); if (t === 'Compare') fetchCompare(); if (t === 'Human Review') fetchHumanReview(); }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-brand-500/15 text-brand-500' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-3'}`}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  tab === t
+                    ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
               >
                 {t}
                 {t === 'Human Review' && humanReview.length > 0 && (
-                  <span className="ml-1.5 w-4 h-4 rounded-full bg-amber-500 text-white text-xs inline-flex items-center justify-center">
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-xs font-bold inline-flex items-center justify-center">
                     {humanReview.length}
                   </span>
                 )}
@@ -245,78 +262,106 @@ export default function App() {
           </nav>
 
           {/* Safety Banner */}
-          <div className="text-xs text-slate-600 border border-white/5 rounded-md px-2 py-1">
-            🔒 PROTOTYPE — No real money
+          <div className="text-xs font-medium text-slate-600 border border-slate-200 bg-slate-50 rounded-lg px-3 py-1.5 shadow-sm flex items-center gap-1.5">
+            <span>🔒</span>
+            <span>PROTOTYPE — Mock Gateway Only</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-6">
+      <main className="max-w-[1600px] mx-auto px-6 py-6 space-y-6">
 
-        {/* Control Bar */}
-        <div className="flex flex-wrap items-center gap-2 mb-6 p-4 card">
-          <button className="btn-primary" onClick={handleGenerateDemo} disabled={loading.demo}>
-            {loading.demo ? '...' : '📋 Generate Demo Data'}
-          </button>
-          <button className="btn-secondary" onClick={handleGenerateData} disabled={loading.generate}>
-            {loading.generate ? '...' : '⚙️ Generate 5K Records'}
-          </button>
-          <div className="w-px h-6 bg-white/10" />
-          <button
-            className={`btn-primary ${isAgentRunning ? 'opacity-75' : ''}`}
-            onClick={handleRunAgent}
-            disabled={loading.agent || isAgentRunning}
-          >
-            {isAgentRunning ? (
-              <>
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                Agent Running...
-              </>
-            ) : '🤖 Run Recovery Agent'}
-          </button>
-          <button className="btn-secondary" onClick={handleRunBaseline} disabled={loading.baseline}>
-            {loading.baseline ? '...' : '📊 Run Baseline'}
-          </button>
-          <button className="btn-secondary" onClick={handleCompare}>
-            📈 Compare Results
-          </button>
-          <div className="flex-1" />
-          <button className="btn-danger" onClick={handleReset} disabled={loading.reset}>
-            {loading.reset ? '...' : '↺ Reset Demo'}
-          </button>
+        {/* Control Bar - Cleanly aligned and grouped */}
+        <div className="card p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Data Operations */}
+            <div className="flex items-center gap-2">
+              <button className="btn-secondary text-xs h-9" onClick={handleGenerateDemo} disabled={loading.demo}>
+                {loading.demo ? '...' : '📋 Demo Cases (20)'}
+              </button>
+              <button className="btn-secondary text-xs h-9" onClick={handleGenerateData} disabled={loading.generate}>
+                {loading.generate ? '...' : '⚙️ 5K Dataset'}
+              </button>
+            </div>
+
+            <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
+
+            {/* Agent Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                className={`btn-primary text-xs h-9 ${isAgentRunning ? 'opacity-80' : ''}`}
+                onClick={handleRunAgent}
+                disabled={loading.agent || isAgentRunning}
+              >
+                {isAgentRunning ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    Agent Running...
+                  </>
+                ) : '🤖 Run Recovery Agent'}
+              </button>
+              <button className="btn-secondary text-xs h-9" onClick={handleRunBaseline} disabled={loading.baseline}>
+                {loading.baseline ? '...' : '📊 Run Baseline'}
+              </button>
+            </div>
+
+            <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
+
+            {/* Analytics */}
+            <button className="btn-secondary text-xs h-9" onClick={handleCompare}>
+              📈 Compare Strategy
+            </button>
+          </div>
+
+          <div>
+            <button
+              className={`text-xs h-9 px-3 rounded-lg font-medium transition-all duration-150 flex items-center justify-center gap-1.5 ${
+                confirmReset
+                  ? 'bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-sm ring-2 ring-rose-300 animate-pulse'
+                  : 'btn-danger'
+              }`}
+              onClick={handleReset}
+              disabled={loading.reset}
+            >
+              {loading.reset ? '...' : confirmReset ? '⚠️ Confirm Reset?' : '↺ Reset Demo'}
+            </button>
+          </div>
         </div>
 
         {/* Tab Content */}
         {tab === 'Dashboard' && (
           <div className="space-y-6">
-            {/* Metrics */}
+            {/* Metrics Grid */}
             <MetricGrid metrics={metrics} loading={metricsLoading} />
 
-            {/* Charts + Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="card p-4">
+            {/* Charts + Activity - Aligned 3-column row with uniform heights */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="card p-5 h-[280px] flex flex-col justify-between">
                 <FailureCategoryChart metrics={summaryMetrics} />
               </div>
-              <div className="card p-4">
+              <div className="card p-5 h-[280px] flex flex-col justify-between">
                 <ActionDistributionChart metrics={summaryMetrics} />
               </div>
               {/* Activity Feed */}
-              <div className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
-                  Agent Activity Feed
-                </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="card p-5 h-[280px] flex flex-col">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                    Agent Activity Feed
+                  </h3>
+                  <span className="text-xs text-slate-400 font-medium">Real-time SSE</span>
+                </div>
+                <div className="space-y-2 flex-1 overflow-y-auto pr-1 mt-3">
                   {activityFeed.length === 0 ? (
-                    <div className="text-slate-500 text-xs py-4 text-center">
-                      Start the agent to see live events
+                    <div className="text-slate-400 text-xs py-10 text-center">
+                      Run the recovery agent to observe live execution events
                     </div>
                   ) : activityFeed.slice(0, 20).map((ev, i) => (
-                    <div key={i} className="flex gap-2 text-xs animate-slide-in">
-                      <span>{eventIcon(ev.eventType)}</span>
-                      <div>
-                        <div className="text-slate-300 leading-snug">{ev.description}</div>
-                        <div className="mono text-slate-600">{ev.paymentId}</div>
+                    <div key={i} className="flex gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs animate-slide-in">
+                      <span className="text-sm">{eventIcon(ev.eventType)}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-slate-700 font-medium leading-snug">{ev.description}</div>
+                        <div className="mono text-slate-400 text-[11px] mt-0.5">{ev.paymentId}</div>
                       </div>
                     </div>
                   ))}
@@ -342,7 +387,7 @@ export default function App() {
 
         {tab === 'Compare' && (
           <div className="space-y-6">
-            <div className="card p-4">
+            <div className="card p-5">
               <RecoveryCompareChart data={compareData} />
             </div>
             <CompareView data={compareData} loading={compareLoading} />

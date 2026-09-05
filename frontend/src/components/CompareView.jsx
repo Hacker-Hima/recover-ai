@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent } from '../api';
+import { formatCurrency } from '../api';
 
 export function CompareView({ data, loading }) {
   if (loading) {
@@ -7,8 +7,12 @@ export function CompareView({ data, loading }) {
 
   if (!data?.recoverai && !data?.baseline) {
     return (
-      <div className="card p-8 text-center text-slate-500">
-        <p>Run both <strong className="text-brand-500">RecoverAI</strong> and <strong className="text-purple-400">Baseline</strong> to see the comparison</p>
+      <div className="card p-10 text-center text-slate-500">
+        <div className="text-3xl mb-2">⚖️</div>
+        <p className="text-base font-semibold text-slate-800">No comparison data yet</p>
+        <p className="text-xs text-slate-400 mt-1">
+          Run both <strong className="text-brand-600">RecoverAI Agent</strong> and <strong className="text-purple-600">Baseline</strong> to see side-by-side metrics
+        </p>
       </div>
     );
   }
@@ -43,42 +47,48 @@ export function CompareView({ data, loading }) {
 
   return (
     <div className="card overflow-hidden">
-      <div className="grid grid-cols-3 bg-surface-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-        <div className="px-4 py-3">Metric</div>
-        <div className="px-4 py-3 text-center text-brand-500">RecoverAI</div>
-        <div className="px-4 py-3 text-center text-purple-400">Baseline</div>
+      <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="px-5 py-3.5">Metric</div>
+        <div className="px-5 py-3.5 text-center text-brand-600">RecoverAI Agent</div>
+        <div className="px-5 py-3.5 text-center text-purple-600">Blind Retry Baseline</div>
       </div>
 
-      {rows.map((row, i) => {
-        const w = winner(row.ai, row.base, row.higherIsBetter);
-        return (
-          <div key={i} className="grid grid-cols-3 border-t border-white/5 hover:bg-surface-3/30 transition-colors">
-            <div className="px-4 py-3 text-sm text-slate-400">{row.label}</div>
-            <div className={`px-4 py-3 text-center font-semibold text-sm ${w === 'ai' ? 'text-emerald-400' : w === 'base' ? 'text-red-400' : 'text-slate-200'}`}>
-              {fmt(row.ai, row.unit, row.decimals)}
-              {w === 'ai' && <span className="ml-1 text-xs">▲</span>}
+      <div className="divide-y divide-slate-100">
+        {rows.map((row, i) => {
+          const w = winner(row.ai, row.base, row.higherIsBetter);
+          return (
+            <div key={i} className="grid grid-cols-3 hover:bg-slate-50/70 transition-colors items-center">
+              <div className="px-5 py-3.5 text-sm font-medium text-slate-700">{row.label}</div>
+              <div className={`px-5 py-3.5 text-center font-bold text-sm ${
+                w === 'ai' ? 'text-emerald-600 bg-emerald-50/40' : w === 'base' ? 'text-rose-600' : 'text-slate-800'
+              }`}>
+                {fmt(row.ai, row.unit, row.decimals)}
+                {w === 'ai' && <span className="ml-1 text-xs">★</span>}
+              </div>
+              <div className={`px-5 py-3.5 text-center font-bold text-sm ${
+                w === 'base' ? 'text-emerald-600 bg-emerald-50/40' : w === 'ai' ? 'text-slate-500' : 'text-slate-800'
+              }`}>
+                {fmt(row.base, row.unit, row.decimals)}
+                {w === 'base' && <span className="ml-1 text-xs">★</span>}
+              </div>
             </div>
-            <div className={`px-4 py-3 text-center font-semibold text-sm ${w === 'base' ? 'text-emerald-400' : w === 'ai' ? 'text-red-400' : 'text-slate-200'}`}>
-              {fmt(row.base, row.unit, row.decimals)}
-              {w === 'base' && <span className="ml-1 text-xs">▲</span>}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       {c.recoveryRateDiff !== undefined && (
-        <div className="px-4 py-4 border-t border-white/10 bg-brand-500/5">
-          <div className="text-xs text-slate-500 mb-2 uppercase tracking-wide font-semibold">Summary</div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div>
-              <span className="text-slate-500">Recovery Rate: </span>
-              <span className={c.recoveryRateDiff > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                {c.recoveryRateDiff > 0 ? '+' : ''}{(c.recoveryRateDiff || 0).toFixed(1)}% {c.recoveryRateDiff > 0 ? 'better' : 'worse'}
+        <div className="px-6 py-4 border-t border-slate-200 bg-brand-50/60">
+          <div className="text-xs text-brand-700 mb-2 uppercase tracking-wider font-bold">Executive Summary</div>
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600 font-medium">Recovery Rate Delta:</span>
+              <span className={`font-bold px-2 py-0.5 rounded text-xs ${c.recoveryRateDiff >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                {c.recoveryRateDiff >= 0 ? '+' : ''}{(c.recoveryRateDiff || 0).toFixed(1)}% {c.recoveryRateDiff >= 0 ? 'higher' : 'lower'}
               </span>
             </div>
-            <div>
-              <span className="text-slate-500">Extra Revenue: </span>
-              <span className={c.recoveredRevenueDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600 font-medium">Net Revenue Difference:</span>
+              <span className={`font-bold px-2 py-0.5 rounded text-xs ${c.recoveredRevenueDiff >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                 {c.recoveredRevenueDiff >= 0 ? '+' : ''}{formatCurrency(c.recoveredRevenueDiff)}
               </span>
             </div>
